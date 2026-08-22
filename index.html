@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>💬 My Chat</h1>
+        <p id="roomName">Онлайн-чат</p>
+    </div>
+
+    <div id="login" class="login">
+        <h2>Войти в чат</h2>
+
+        <input id="name" placeholder="Твоё имя">
+        <input id="room" placeholder="Название комнаты">
+
+        <button onclick="joinChat()">Войти</button>
+    </div>
+
+    <div id="chat" class="chat">
+
+        <div id="messages"></div>
+
+        <form onsubmit="sendMessage(event)">
+            <input id="message" placeholder="Напиши сообщение...">
+            <button>➤</button>
+        </form>
+
+    </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
