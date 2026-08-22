@@ -11,29 +11,43 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
-});
-
 app.use(express.static(__dirname));
 
 io.on("connection", (socket) => {
 
+    console.log("Подключился:", socket.id);
+
     socket.on("join-room", (room) => {
+
         socket.join(room);
+
+        console.log(
+            socket.id + " вошёл в комнату: " + room
+        );
     });
 
     socket.on("message", (data) => {
+
+        console.log(
+            "Сообщение:",
+            data.room,
+            data.name,
+            data.text
+        );
+
         io.to(data.room).emit("message", {
             name: data.name,
             text: data.text
         });
     });
 
+    socket.on("disconnect", () => {
+        console.log("Отключился:", socket.id);
+    });
 });
 
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+    console.log("Server started on port " + PORT);
 });
