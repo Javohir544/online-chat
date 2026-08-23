@@ -3,43 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Chat</title>
+    <title>Modern Chat</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <div class="container">
-
     <div class="header">
-        <h1>💬 My Chat</h1>
-        <p id="roomName">Онлайн-чат</p>
+        <h1>💬 Modern Chat</h1>
+        <p id="roomName">Выберите комнату</p>
     </div>
 
+    <!-- Экран входа -->
     <div id="login" class="login">
-        <h2>Войти в чат</h2>
-
+        <h2>Вход в чат</h2>
         <input id="name" placeholder="Твоё имя">
         <input id="room" placeholder="Название комнаты">
-
-        <button onclick="joinChat()">Войти</button>
+        <button onclick="joinChat()">Войти в комнату</button>
     </div>
 
+    <!-- Экран чата -->
     <div id="chat" class="chat">
-
         <div id="messages"></div>
+        
+        <!-- Индикатор печати -->
+        <div id="typingIndicator" class="typing-indicator" style="display: none;">
+            <span></span><span></span><span></span>
+            <p id="typingText"></p>
+        </div>
 
         <form onsubmit="sendMessage(event)">
-            <input id="message" placeholder="Напиши сообщение...">
-            <button>➤</button>
+            <input id="message" placeholder="Напиши сообщение..." autocomplete="off" oninput="handleTyping()">
+            <button type="submit">➤</button>
         </form>
-
     </div>
-
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="app.js"></script>
-
 </body>
 </html>
