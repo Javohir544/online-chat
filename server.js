@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
-import sqlite3 from "sqlite3";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,18 +14,36 @@ const io = new Server(server);
 
 app.use(express.static(__dirname));
 
-const db = new sqlite3.Database(path.join(__dirname, "database.sqlite"), (err) => {
-    if (err) console.error("Ошибка открытия БД", err.message);
-    else console.log("Подключено к базе данных SQLite.");
-});
+// Путь к файлу с историей сообщений
+const dbFile = path.join(__dirname, "messages.json");
 
-db.run(`CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room TEXT,
-    name TEXT,
-    text TEXT,
-    time TEXT
-)`);
+// Функция чтения истории
+function getHistory() {
+    try {
+        if (fs.existsSync(dbFile)) {
+            const data = fs.readFileSync(dbFile, "utf8");
+            return JSON.parse(data);
+        }
+    } catch (e) {
+        console.error("Ошибка чтения истории:", e);
+    }
+    return [];
+}
+
+// Функция сохранения истории
+function saveMessageToHistory(messageData) {
+    try {
+        const history = getHistory();
+        history.push(messageData);
+        // Сохраняем последние 100 сообщений, чтобы файл не рос бесконечно
+        if (history.length > 100) {
+            history.shift();
+        }
+        fs.writeFileSync(dbFile, JSON.stringify(history, null, 2));
+    } catch (e) {
+        console.error("Ошибка сохранения истории:", e);
+    }
+}
 
 io.on("connection", (socket) => {
     console.log("Подключился пользователь:", socket.id);
@@ -34,15 +52,9 @@ io.on("connection", (socket) => {
         socket.join(room);
         console.log(`${socket.id} вошёл в комнату: ${room}`);
 
-        db.all(
-            `SELECT name, text, time FROM messages WHERE room = ? ORDER BY id ASC`,
-            [room],
-            (err, rows) => {
-                if (!err) {
-                    socket.emit("load-history", rows);
-                }
-            }
-        );
+        // Отправляем историю конкретной комнаты
+        const history = getHistory().filter(msg => msg.room === room);
+        socket.emit("load-history", history);
     });
 
     socket.on("message", (data) => {
@@ -54,20 +66,13 @@ io.on("connection", (socket) => {
             time: time
         };
 
-        db.run(
-            `INSERT INTO messages (room, name, text, time) VALUES (?, ?, ?, ?)`,
-            [messageData.room, messageData.name, messageData.text, messageData.time],
-            (err) => {
-                if (err) {
-                    console.error("Ошибка сохранения сообщения", err.message);
-                    return;
-                }
-                io.to(data.room).emit("message", messageData);
-            }
-        );
+        // Сохраняем в файл
+        saveMessageToHistory(messageData);
+
+        // Рассылаем всем в комнате
+        io.to(data.room).emit("message", messageData);
     });
 
-    // Обработка статуса "печатает"
     socket.on("typing", (data) => {
         socket.to(data.room).emit("typing", data.name);
     });
